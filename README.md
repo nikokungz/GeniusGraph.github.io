@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>วาดกราฟ สนุกและง่าย!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #F5F7FA;
+            --text: #333333;
+            --success: #28A745;
+            --error: #DC3545;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
+            color: var(--text);
+            padding: 20px;
+            touch-action: manipulation;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary);
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: visible;
+        }
+        canvas {
+            border: none;
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+        #controls {
+            max-width: 600px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 15px;
+            background: var(--secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .control-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .control-group select,
+        .control-group input[type="color"],
+        .control-group input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .control-group select:focus,
+        .control-group input[type="color"]:focus,
+        .control-group input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .control-group input[type="color"] {
+            width: 40px;
+            height: 40px;
+            padding: 2px;
+        }
+        .control-group input[type="text"] {
+            cursor: text;
+        }
+        button {
+            padding: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        button:hover {
+            background: #357ABD;
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #equation {
+            max-width: 600px;
+            width: 100%;
+            margin: 10px auto;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-size: 1rem;
+            color: var(--text);
+            animation: fadeIn 0.5s ease-in;
+            word-break: break-word;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        .mobile-only {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            #controls {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            .control-group label {
+                font-size: 0.85rem;
+            }
+            .control-group select,
+            .control-group input[type="color"],
+            .control-group input[type="text"],
+            button {
+                font-size: 0.85rem;
+                padding: 8px;
+            }
+            #equation {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+            .mobile-only {
+                display: block;
+                font-size: 0.85rem;
+                color: #666;
+                text-align: center;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>วาดกราฟ สนุกและง่าย! 🎨</h1>
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+    <p id="equation"></p>
+    <div id="controls">
+        <div class="control-group">
+            <label>สีเส้น</label>
+            <input type="color" id="colorPicker" value="#000000" class="tooltip" data-tooltip="เลือกสีสำหรับวาด" />
+        </div>
+        <div class="control-group">
+            <label>สมการเลือก</label>
+            <select id="orderSelect" class="tooltip" data-tooltip="เลือกประเภทสมการสำหรับวาด">
+                <option value="linear">📈 Linear</option>
+                <option value="polynomial2" selected>📉 Y Parabola (y=ax²+bx+c)</option>
+                <option value="parabolaX">📉 X Parabola (x = ay²+by+c)</option>
+                <option value="polynomial3">📊 Cubic</option>
+                <option value="exponential">📈 Exponential</option>
+                <option value="logarithmic">📊 Logarithm</option>
+                <option value="power">📈 Power</option>
+                <option value="sinusoidal">🌊 Sinusoidal (ประมาณ)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>เครื่องมือ</label>
+            <select id="toolSelect" class="tooltip" data-tooltip="เลือกเครื่องมือวาด">
+                <option value="freehand">🎨 วาดมือ</option>
+                <option value="line">📏 เส้นตรง</option>
+                <option value="rect">⬛ สี่เหลี่ยม</option>
+                <option value="circle">⚪ วงกลม</option>
+                <option value="curve">〰️ เส้นโค้ง</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>ป้อนสมการ</label>
+            <input type="text" id="equationInput" placeholder="เช่น y = 2x + 1" class="tooltip" data-tooltip="ป้อนสมการเพื่อวาดกราฟ" />
+        </div>
+        <button onclick="clearCanvas()" class="tooltip" data-tooltip="ล้างข้อมูลทั้งหมด">🗑️ ล้าง</button>
+        <button onclick="toggleEraser()" id="eraserBtn" class="tooltip" data-tooltip="สลับยางลบ/ปากกา">🧽 ยางลบ</button>
+        <button onclick="toggleGrid()" id="gridBtn" class="tooltip" data-tooltip="แสดง/ซ่อนเส้นกราฟ">🌐 เส้นกริด</button>
+        <button onclick="toggleQuadrants()" id="quadBtn" class="tooltip" data-tooltip="แสดง/ซ่อน Quadrants">🧭 Quadrants</button>
+        <button onclick="plotEquation()" id="plotBtn" class="tooltip" data-tooltip="วาดกราฟจากสมการ">📉 สมการ</button>
+        <div class="mobile-only">📌 หมายเหตุ: ใช้นิ้ววาดบนมือถือ</div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <script>
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const colorPicker = document.getElementById("colorPicker");
+        const orderSelect = document.getElementById("orderSelect");
+        const toolSelect = document.getElementById("toolSelect");
+        const equationDisplay = document.getElementById("equation");
+        const equationInput = document.getElementById("equationInput");
+        const eraserBtn = document.getElementById("eraserBtn");
+        const gridBtn = document.getElementById("gridBtn");
+        const quadBtn = document.getElementById("quadBtn");
+        const plotBtn = document.getElementById("plotBtn");
+
+        console.log("DOM elements initialized:", { canvas, ctx, colorPicker, orderSelect, toolSelect, equationDisplay, equationInput, eraserBtn, gridBtn, quadBtn, plotBtn });
+
+        let showGrid = true;
+        let showQuadrants = true;
+        let isDrawing = false;
+        let isErasing = false;
+        let points = [];
+        let pixelPoints = [];
+        let rawPoints = [];
+        let drawnObjects = [];
+        let startX, startY;
+        let controlX, controlY;
+        let isFirstClick = false;
+        let clickCount = 0;
+
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-container');
+            const size = Math.min(container.clientWidth, isMobile ? window.innerHeight * 0.6 : 500);
+            canvas.width = size;
+            canvas.height = size;
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+            console.log(`Canvas resized: ${canvas.width}x${canvas.height}`);
+            drawAll();
+        }
+
+        function drawGridAndAxes() {
+            try {
+                console.log("Drawing grid and axes, showGrid:", showGrid, "showQuadrants:", showQuadrants);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const unit = canvas.width / 10;
+                if (showGrid) {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 1;
+                    for (let x = 0; x <= canvas.width; x += unit) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, canvas.height);
+                        ctx.stroke();
+                    }
+                    for (let y = 0; y <= canvas.height; y += unit) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(canvas.width, y);
+                        ctx.stroke();
+                    }
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY);
+                    ctx.lineTo(canvas.width, centerY);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, 0);
+                    ctx.lineTo(centerX, canvas.height);
+                    ctx.stroke();
+                    ctx.font = '12px Poppins';
+                    ctx.fillStyle = '#333333';
+                    ctx.fillText('x', canvas.width - 15, centerY - 5);
+                    for (let x = -5; x <= 5; x++) {
+                        if (x !== 0) {
+                            ctx.fillText(x.toString(), centerX + x * unit - 5, centerY + 15);
+                        }
+                    }
+                    ctx.fillText('y', centerX + 5, 15);
+                    for (let y = -5; y <= 5; y++) {
+                        if (y !== 0) {
+                            ctx.fillText(y.toString(), centerX + 10, centerY - y * unit + 5);
+                        }
+                    }
+                }
+                if (showQuadrants) {
+                    ctx.font = '14px Poppins';
+                    ctx.fillStyle = '#333333';
+                    ctx.fillText('Q1', centerX + unit * 3, centerY - unit * 3);
+                    ctx.fillText('Q2', centerX - unit * 4, centerY - unit * 3);
+                    ctx.fillText('Q3', centerX - unit * 4, centerY + unit * 4);
+                    ctx.fillText('Q4', centerX + unit * 3, centerY + unit * 4);
+                }
+            } catch (e) {
+                console.error("Error in drawGridAndAxes:", e.message);
+            }
+        }
+
+        function getXY(e) {
+            try {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                let x = (clientX - rect.left) * scaleX;
+                let y = (clientY - rect.top) * scaleY;
+                x = Math.max(0, Math.min(canvas.width, x));
+                y = Math.max(0, Math.min(canvas.height, y));
+                console.log(`getXY: client=(${clientX.toFixed(2)}, ${clientY.toFixed(2)}), canvas=(${x.toFixed(2)}, ${y.toFixed(2)})`);
+                return { x, y };
+            } catch (e) {
+                console.error("Error in getXY:", e.message);
+                return { x: 0, y: 0 };
+            }
+        }
+
+        function customRound(val) {
+            const decimal = val % 1;
+            if (decimal >= 0.6) return Math.ceil(val);
+            if (decimal <= 0.4) return Math.floor(val);
+            return Math.round(val);
+        }
+
+        function getGraphX(px) {
+            const x = (px - canvas.width / 2) / (canvas.width / 10);
+            console.log(`getGraphX: px=${px.toFixed(2)}, x=${x.toFixed(3)}`);
+            return x;
+        }
+
+        function getGraphY(py) {
+            const y = (canvas.height / 2 - py) / (canvas.height / 10);
+            console.log(`getGraphY: py=${py.toFixed(2)}, y=${y.toFixed(3)}`);
+            return y;
+        }
+
+        function getCanvasX(x) {
+            return (x * (canvas.width / 10)) + (canvas.width / 2);
+        }
+
+        function getCanvasY(y) {
+            return (canvas.height / 2) - (y * (canvas.height / 10));
+        }
+
+        function getQuadrantAndTrig(x, y) {
+            const r = Math.hypot(x, y);
+            const theta = Math.atan2(y, x);
+            let sinVal = r !== 0 ? Math.sin(theta) : 0;
+            let cosVal = r !== 0 ? Math.cos(theta) : 0;
+            sinVal = Math.abs(sinVal) < 0.01 ? 0 : Math.abs(sinVal) > 0.99 ? Math.sign(sinVal) : sinVal;
+            cosVal = Math.abs(cosVal) < 0.01 ? 0 : Math.abs(cosVal) > 0.99 ? Math.sign(cosVal) : cosVal;
+            let quadrant;
+            if (x > 0 && y > 0) {
+                quadrant = `Q1 (sin: ${sinVal.toFixed(2)}, cos: ${cosVal.toFixed(2)})`;
+            } else if (x < 0 && y > 0) {
+                quadrant = `Q2 (sin: ${sinVal.toFixed(2)}, cos: ${cosVal.toFixed(2)})`;
+            } else if (x < 0 && y < 0) {
+                quadrant = `Q3 (sin: ${sinVal.toFixed(2)}, cos: ${cosVal.toFixed(2)})`;
+            } else if (x > 0 && y < 0) {
+                quadrant = `Q4 (sin: ${sinVal.toFixed(2)}, cos: ${cosVal.toFixed(2)})`;
+            } else {
+                quadrant = `บนแกน (sin: ${sinVal.toFixed(2)}, cos: ${cosVal.toFixed(2)})`;
+            }
+            return quadrant;
+        }
+
+        function isFunction(data, isXDependent) {
+            if (data.length < 2) return false;
+            const map = {};
+            for (let [x, y] of data) {
+                const key = isXDependent ? x.toFixed(2) : y.toFixed(2);
+                const value = isXDependent ? y : x;
+                if (map[key] !== undefined && Math.abs(map[key] - value) > 0.5) return false;
+                map[key] = value;
+            }
+            return true;
+        }
+
+        function isVerticalLine(points) {
+            if (points.length < 2) return false;
+            const xValues = points.map(p => p[0]);
+            const xRange = Math.max(...xValues) - Math.min(...xValues);
+            const xPositive = xValues.filter(x => x > 0).length;
+            const xNegative = xValues.filter(x => x < 0).length;
+            console.log(`isVerticalLine: xRange=${xRange.toFixed(3)}, xPositive=${xPositive}, xNegative=${xNegative}`);
+            return xRange < 0.15 && xPositive >= xNegative;
+        }
+
+        function formatEquation(type, coeffs) {
+            try {
+                const round = (num) => Number(num.toFixed(3));
+                if (!coeffs || coeffs.some(num => isNaN(num) || !isFinite(num))) {
+                    console.log(`Invalid coeffs for ${type}:`, coeffs);
+                    return "สมการไม่สมบูรณ์";
+                }
+                console.log(`Formatting equation: type=${type}, coeffs=`, coeffs);
+                if (type === "linear") {
+                    const [b, m] = coeffs; // b = intercept, m = slope จาก regression.linear
+                    if (m === 0) return `y = ${round(b)}`;
+                    return `y = ${round(b)}x ${m >= 0 ? '+' : ''} ${round(m)}`; // ปรับให้ b มาก่อน x, m ตามหลัง
+                } else if (type === "vertical") {
+                    return `x = ${round(coeffs[0])}`;
+                } else if (type === "polynomial2") {
+                    const [c, b, a] = coeffs; // c = intercept, b = x, a = x² จาก regression.polynomial
+                    let result = `y = ${round(c)}x²`; // a มาก่อน x²
+                    if (b !== 0) result += ` ${b >= 0 ? '+' : ''} ${round(b)}x`; // b ตามด้วย x
+                    if (a !== 0) result += ` ${a >= 0 ? '+' : ''} ${round(a)}`; // c เป็นจุดตัดสุดท้าย
+                    return result;
+                } else if (type === "parabolaX") {
+                    const [c, b, a] = coeffs;
+                    return `x = ${round(c)}y² ${b >= 0 ? '+' : ''} ${round(b)}y ${a >= 0 ? '+' : ''} ${round(a)}`;
+                } else if (type === "polynomial3") {
+                    const [d, c, b, a] = coeffs;
+                    return `y = ${round(d)}x³ ${c >= 0 ? '+' : ''} ${round(c)}x² ${b >= 0 ? '+' : ''} ${round(b)}x ${a >= 0 ? '+' : ''} ${round(a)}`;
+                } else if (type === "exponential") {
+                    const [a, b] = coeffs;
+                    return `y = ${round(a)}*${round(Math.exp(b))}^x`;
+                } else if (type === "logarithmic") {
+                    const [a, b] = coeffs;
+                    return `y = ${round(b)}*ln(x) ${a >= 0 ? '+' : ''} ${round(a)}`;
+                } else if (type === "power") {
+                    const [a, b] = coeffs;
+                    return `y = ${round(a)}*x^${round(b)}`;
+                } else if (type === "sinusoidal") {
+                    const coeffsRounded = coeffs.map(round);
+                    return `ประมาณ: y = ${coeffsRounded.reverse().map((c, i) => `${c}x^${coeffs.length - 1 - i}`).join(' + ')} (อาจไม่แม่นยำ)`;
+                }
+                return "สมการไม่สมบูรณ์";
+            } catch (e) {
+                console.error("Error in formatEquation:", e.message);
+                return "สมการไม่สมบูรณ์";
+            }
+        }
+
+        function parseEquation(input) {
+            try {
+                const clean = input.replace(/\s/g, '').toLowerCase().replace('y=', '');
+                console.log(`Parsing equation: ${clean}`);
+                const types = {
+                    linear: [
+                        /^(-?\d*\.?\d*)x([+-]?\d*\.?\d*)$/,
+                        /^(-?\d*\.?\d*)x$/,
+                        /^([+-]?\d*\.?\d*)$/
+                    ],
+                    polynomial2: [
+                        /^(-?\d*\.?\d*)x\^2([+-]?\d*\.?\d*)x([+-]?\d*\.?\d*)$/,
+                        /^(-?\d*\.?\d*)x\^2([+-]?\d*\.?\d*)$/,
+                        /^(-?\d*\.?\d*)x\^2([+-]?\d*\.?\d*)x$/,
+                        /^(-?\d*\.?\d*)x\^2$/
+                    ],
+                    polynomial3: /^(-?\d*\.?\d*)x\^3([+-]?\d*\.?\d*)x\^2([+-]?\d*\.?\d*)x([+-]?\d*\.?\d*)$/,
+                    exponential: /^(-?\d*\.?\d*)\*?(\d*\.?\d*)\^x$/,
+                    logarithmic: /^(-?\d*\.?\d*)\*?ln\(x\)([+-]?\d*\.?\d*)$/,
+                    power: /^(-?\d*\.?\d*)\*?x\^(-?\d*\.?\d*)$/,
+                    sinusoidal: /^(-?\d*\.?\d*)\*?sin\((-?\d*\.?\d*)x([+-]?\d*\.?\d*)\)([+-]?\d*\.?\d*)$/
+                };
+                for (const [type, regexes] of Object.entries(types)) {
+                    if (Array.isArray(regexes)) {
+                        for (const regex of regexes) {
+                            const match = clean.match(regex);
+                            if (match) {
+                                const coeffs = match.slice(1).map(n => {
+                                    if (n === '' || n === '+') return 1;
+                                    if (n === '-') return -1;
+                                    if (n === undefined) return 0;
+                                    return parseFloat(n);
+                                });
+                                console.log(`Parsed ${type}:`, coeffs);
+                                if (type === "linear" && match[0].match(/^[+-]?\d*\.?\d*$/)) {
+                                    return { type: "linear", coeffs: [coeffs[0], 0] };
+                                }
+                                if (type === "polynomial2") {
+                                    while (coeffs.length < 3) coeffs.unshift(0);
+                                    return { type: "polynomial2", coeffs };
+                                }
+                                return { type, coeffs };
+                            }
+                        }
+                    } else {
+                        const match = clean.match(regexes);
+                        if (match) {
+                            const coeffs = match.slice(1).map(n => n === '' || n === '+' ? 1 : n === '-' ? -1 : parseFloat(n));
+                            console.log(`Parsed ${type}:`, coeffs);
+                            return { type, coeffs };
+                        }
+                    }
+                }
+                console.log(`Invalid equation: ${clean}`);
+                return null;
+            } catch (e) {
+                console.error("Error in parseEquation:", e.message);
+                return null;
+            }
+        }
+
+        function evaluateEquation(type, coeffs, x) {
+            try {
+                if (type === "linear") {
+                    const [b, m] = coeffs;
+                    return b * x + m;
+                } else if (type === "vertical") {
+                    return coeffs[0];
+                } else if (type === "polynomial2") {
+                    const [c, b, a] = coeffs;
+                    return c * x * x + b * x + a;
+                } else if (type === "parabolaX") {
+                    const [c, b, a] = coeffs;
+                    return c * x * x + b * x + a;
+                } else if (type === "polynomial3") {
+                    const [d, c, b, a] = coeffs;
+                    return a * x * x * x + b * x * x + c * x + d;
+                } else if (type === "exponential") {
+                    const [a, b] = coeffs;
+                    return a * Math.pow(Math.exp(b), x);
+                } else if (type === "logarithmic") {
+                    if (x <= 0) return NaN;
+                    const [a, b] = coeffs;
+                    return a * Math.log(x) + b;
+                } else if (type === "power") {
+                    if (x <= 0) return NaN;
+                    const [a, b] = coeffs;
+                    return a * Math.pow(x, b);
+                } else if (type === "sinusoidal") {
+                    const [a, b, c, d] = coeffs;
+                    return a * Math.sin(b * x + c) + d;
+                }
+                return NaN;
+            } catch (e) {
+                console.error(`Error evaluating equation: ${e.message}`);
+                return NaN;
+            }
+        }
+
+        function plotEquation() {
+            try {
+                const input = equationInput.value.trim();
+                console.log(`Plotting equation: ${input}`);
+                if (!input) {
+                    equationDisplay.innerText = "❌ กรุณาป้อนสมการ";
+                    return;
+                }
+                const parsed = parseEquation(input);
+                if (!parsed) {
+                    equationDisplay.innerText = "❌ สมการไม่ถูกต้อง (เช่น y=2x+1 หรือ y=x^2)";
+                    return;
+                }
+                const { type, coeffs } = parsed;
+                const step = 0.1;
+                const graphPoints = [];
+                if (type === "parabolaX") {
+                    for (let y = -5; y <= 5; y += step) {
+                        const x = evaluateEquation(type, coeffs, y);
+                        if (!isNaN(x) && isFinite(x)) {
+                            graphPoints.push([x, y]);
+                        }
+                    }
+                } else {
+                    for (let x = -5; x <= 5; x += step) {
+                        const y = evaluateEquation(type, coeffs, x);
+                        if (!isNaN(y) && isFinite(y)) {
+                            graphPoints.push([x, y]);
+                        }
+                    }
+                }
+                if (graphPoints.length < 2) {
+                    equationDisplay.innerText = "❌ ไม่สามารถวาดกราฟได้ (จุดไม่เพียงพอ)";
+                    return;
+                }
+                const pixelPoints = graphPoints.map(([x, y]) => [getCanvasX(x), getCanvasY(y)]);
+                drawnObjects.push({ type: "freehand", points: pixelPoints, color: colorPicker.value });
+                drawAll();
+                equationDisplay.innerText = `✅ วาดกราฟ: ${input}`;
+            } catch (e) {
+                console.error("Error in plotEquation:", e.message);
+                equationDisplay.innerText = "❌ เกิดข้อผิดพลาดในการวาดกราฟ";
+            }
+        }
+
+        function drawShapePreview(x1, y1, x2, y2, cx, cy) {
+            try {
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                if (toolSelect.value === "line") {
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                } else if (toolSelect.value === "rect") {
+                    ctx.rect(x1, y1, x2 - x1, y2 - y1);
+                } else if (toolSelect.value === "circle") {
+                    const r = Math.hypot(x2 - x1, y2 - y1);
+                    ctx.arc(x1, y1, r, 0, Math.PI * 2);
+                } else if (toolSelect.value === "curve" && cx !== undefined) {
+                    ctx.moveTo(x1, y1);
+                    ctx.quadraticCurveTo(cx, cy, x2, y2);
+                }
+                ctx.stroke();
+                ctx.closePath();
+                ctx.setLineDash([]);
+            } catch (e) {
+                console.error("Error in drawShapePreview:", e.message);
+            }
+        }
+
+        function drawShape(x1, y1, x2, y2, cx, cy) {
+            try {
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                let obj;
+                if (toolSelect.value === "line") {
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    obj = { type: "line", x1, y1, x2, y2, color: ctx.strokeStyle };
+                } else if (toolSelect.value === "rect") {
+                    ctx.rect(x1, y1, x2 - x1, y2 - y1);
+                    obj = { type: "rect", x1, y1, x2, y2, color: ctx.strokeStyle };
+                } else if (toolSelect.value === "circle") {
+                    const r = Math.hypot(x2 - x1, y2 - y1);
+                    ctx.arc(x1, y1, r, 0, Math.PI * 2);
+                    obj = { type: "circle", x1, y1, r, color: ctx.strokeStyle };
+                } else if (toolSelect.value === "curve") {
+                    ctx.moveTo(x1, y1);
+                    ctx.quadraticCurveTo(cx, cy, x2, y2);
+                    obj = { type: "curve", x1, y1, x2, y2, cx, cy, color: ctx.strokeStyle };
+                }
+                ctx.stroke();
+                ctx.closePath();
+                if (obj) {
+                    drawnObjects.push(obj);
+                    const graphX = customRound(getGraphX(x2));
+                    const graphY = customRound(getGraphY(y2));
+                    equationDisplay.innerText = `✅ วาดรูปร่างเรียบร้อย (${graphX}, ${graphY}, ${getQuadrantAndTrig(graphX, graphY)})`;
+                    console.log(`Shape drawn: ${obj.type}, end=(${graphX}, ${graphY})`);
+                }
+            } catch (e) {
+                console.error("Error in drawShape:", e.message);
+            }
+        }
+
+        function drawAll() {
+            try {
+                console.log("drawAll called, drawnObjects:", drawnObjects.length);
+                drawGridAndAxes();
+                drawnObjects.forEach((obj) => {
+                    ctx.strokeStyle = obj.color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    if (obj.type === "line") {
+                        ctx.moveTo(obj.x1, obj.y1);
+                        ctx.lineTo(obj.x2, obj.y2);
+                    } else if (obj.type === "rect") {
+                        ctx.rect(obj.x1, obj.y1, obj.x2 - obj.x1, obj.y2 - obj.y1);
+                    } else if (obj.type === "circle") {
+                        ctx.arc(obj.x1, obj.y1, obj.r, 0, Math.PI * 2);
+                    } else if (obj.type === "freehand") {
+                        for (let i = 1; i < obj.points.length; i++) {
+                            ctx.moveTo(obj.points[i-1][0], obj.points[i-1][1]);
+                            ctx.lineTo(obj.points[i][0], obj.points[i][1]);
+                        }
+                    } else if (obj.type === "curve") {
+                        ctx.moveTo(obj.x1, obj.y1);
+                        ctx.quadraticCurveTo(obj.cx, obj.cy, obj.x2, obj.y2);
+                    }
+                    ctx.stroke();
+                    ctx.closePath();
+                });
+            } catch (e) {
+                console.error("Error in drawAll:", e.message);
+            }
+        }
+
+        function clearCanvas() {
+            try {
+                console.log("Clearing canvas");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGridAndAxes();
+                points = [];
+                pixelPoints = [];
+                rawPoints = [];
+                drawnObjects = [];
+                equationDisplay.innerText = "";
+                equationInput.value = "";
+                isErasing = false;
+                isFirstClick = false;
+                clickCount = 0;
+                isDrawing = false;
+                eraserBtn.innerText = "🧽 ยางลบ";
+                canvas.style.cursor = "crosshair";
+            } catch (e) {
+                console.error("Error in clearCanvas:", e.message);
+            }
+        }
+
+        function toggleEraser() {
+            try {
+                isErasing = !isErasing;
+                isFirstClick = false;
+                clickCount = 0;
+                isDrawing = false;
+                eraserBtn.innerText = isErasing ? "✏️ ปากกา" : "🧽 ยางลบ";
+                canvas.style.cursor = isErasing ? "pointer" : "crosshair";
+                console.log("Toggled eraser:", isErasing);
+                drawAll();
+            } catch (e) {
+                console.error("Error in toggleEraser:", e.message);
+            }
+        }
+
+        function toggleGrid() {
+            try {
+                showGrid = !showGrid;
+                gridBtn.innerText = showGrid ? "🌐 เส้นกริด" : "🌐 ซ่อนกริด";
+                console.log("Toggled grid:", showGrid);
+                drawAll();
+            } catch (e) {
+                console.error("Error in toggleGrid:", e.message);
+            }
+        }
+
+        function toggleQuadrants() {
+            try {
+                showQuadrants = !showQuadrants;
+                quadBtn.innerText = showQuadrants ? "🧭 Quadrants" : "🧭 ซ่อน Q";
+                console.log("Toggled quadrants:", showQuadrants);
+                drawAll();
+            } catch (e) {
+                console.error("Error in toggleQuadrants:", e.message);
+            }
+        }
+
+        function isIntersectingEraser(obj, eraserX, eraserY, eraserRadius) {
+            try {
+                console.log(`Checking ${obj.type} at (${eraserX.toFixed(2)}, ${eraserY.toFixed(2)})`);
+                if (obj.type === "freehand") {
+                    const newPoints = obj.points.filter(([px, py]) => {
+                        const dist = Math.hypot(px - eraserX, py - eraserY);
+                        return dist > eraserRadius;
+                    });
+                    obj.points = newPoints;
+                    console.log(`Freehand points after erase: ${obj.points.length}`);
+                    return obj.points.length > 1;
+                } else if (obj.type === "line") {
+                    const { x1, y1, x2, y2 } = obj;
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const len = Math.hypot(dx, dy) || 1;
+                    const t = ((eraserX - x1) * dx + (eraserY - y1) * dy) / (len * len);
+                    const closestX = x1 + Math.max(0, Math.min(1, t)) * dx;
+                    const closestY = y1 + Math.max(0, Math.min(1, t)) * dy;
+                    const dist = Math.hypot(eraserX - closestX, eraserY - closestY);
+                    console.log(`Line dist: ${dist.toFixed(2)}, threshold: ${eraserRadius}`);
+                    return dist <= eraserRadius;
+                } else if (obj.type === "rect") {
+                    const { x1, y1, x2, y2 } = obj;
+                    const left = Math.min(x1, x2);
+                    const right = Math.max(x1, x2);
+                    const top = Math.min(y1, y2);
+                    const bottom = Math.max(y1, y2);
+                    const closestX = Math.max(left, Math.min(right, eraserX));
+                    const closestY = Math.max(top, Math.min(bottom, eraserY));
+                    const dist = Math.hypot(eraserX - closestX, eraserY - closestY);
+                    console.log(`Rect dist: ${dist.toFixed(2)}, threshold: ${eraserRadius}`);
+                    return dist <= eraserRadius;
+                } else if (obj.type === "circle") {
+                    const { x1, y1, r } = obj;
+                    const dist = Math.hypot(eraserX - x1, eraserY - y1);
+                    console.log(`Circle dist: ${dist.toFixed(2)}, radius: ${r.toFixed(2)}, threshold: ${eraserRadius}`);
+                    return Math.abs(dist - r) <= eraserRadius || dist <= r;
+                } else if (obj.type === "curve") {
+                    const { x1, y1, x2, y2, cx, cy } = obj;
+                    const steps = 10;
+                    for (let t = 0; t <= 1; t += 1 / steps) {
+                        const u = 1 - t;
+                        const px = u * u * x1 + 2 * u * t * cx + t * t * x2;
+                        const py = u * u * y1 + 2 * u * t * cy + t * t * y2;
+                        const dist = Math.hypot(px - eraserX, py - eraserY);
+                        if (dist <= eraserRadius) {
+                            console.log(`Curve dist: ${dist.toFixed(2)} at t=${t.toFixed(2)}`);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                return false;
+            } catch (e) {
+                console.error("Error in isIntersectingEraser:", e.message);
+                return false;
+            }
+        }
+
+        function handleStart(e) {
+            try {
+                e.preventDefault();
+                console.log(`handleStart: type=${e.type}, tool=${toolSelect.value}, erasing=${isErasing}, drawing=${isDrawing}`);
+                const { x, y } = getXY(e);
+                if (isErasing) {
+                    const eraserRadius = 10;
+                    drawnObjects = drawnObjects.filter((obj) => {
+                        const keep = !isIntersectingEraser(obj, x, y, eraserRadius);
+                        console.log(`Keep ${obj.type}: ${keep}`);
+                        return keep;
+                    });
+                    drawAll();
+                    return;
+                }
+                if (toolSelect.value === "freehand") {
+                    isDrawing = true;
+                    points = [];
+                    pixelPoints = [[x, y]];
+                    rawPoints = [[getGraphX(x), getGraphY(y)]];
+                    const graphX = customRound(getGraphX(x));
+                    const graphY = customRound(getGraphY(y));
+                    points.push([graphX, graphY]);
+                    console.log(`Freehand start: (${rawPoints[0][0].toFixed(2)}, ${rawPoints[0][1].toFixed(2)})`);
+                } else if (toolSelect.value === "curve") {
+                    clickCount++;
+                    if (clickCount === 1) {
+                        startX = x;
+                        startY = y;
+                    } else if (clickCount === 2) {
+                        controlX = x;
+                        controlY = y;
+                    } else if (clickCount === 3) {
+                        drawShape(startX, startY, x, y, controlX, controlY);
+                        clickCount = 0;
+                        drawAll();
+                    }
+                } else {
+                    if (!isFirstClick) {
+                        startX = x;
+                        startY = y;
+                        isFirstClick = true;
+                    } else {
+                        drawShape(startX, startY, x, y);
+                        isFirstClick = false;
+                        drawAll();
+                    }
+                }
+            } catch (e) {
+                console.error("Error in handleStart:", e.message);
+            }
+        }
+
+        function handleMove(e) {
+            try {
+                e.preventDefault();
+                console.log(`handleMove: type=${e.type}, tool=${toolSelect.value}, drawing=${isDrawing}, firstClick=${isFirstClick}`);
+                const { x, y } = getXY(e);
+                if (isErasing) {
+                    const eraserRadius = 10;
+                    drawnObjects = drawnObjects.filter((obj) => {
+                        const keep = !isIntersectingEraser(obj, x, y, eraserRadius);
+                        console.log(`Keep ${obj.type}: ${keep}`);
+                        return keep;
+                    });
+                    drawAll();
+                    return;
+                }
+                if (toolSelect.value === "freehand" && isDrawing) {
+                    const lastPoint = pixelPoints[pixelPoints.length - 1] || [x, y];
+                    ctx.strokeStyle = colorPicker.value;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(lastPoint[0], lastPoint[1]);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.closePath();
+                    pixelPoints.push([x, y]);
+                    const rawX = getGraphX(x);
+                    const rawY = getGraphY(y);
+                    rawPoints.push([rawX, rawY]);
+                    const graphX = customRound(rawX);
+                    const graphY = customRound(rawY);
+                    points.push([graphX, graphY]);
+                    console.log(`Freehand move: raw=(${rawX.toFixed(3)}, ${rawY.toFixed(3)}), rounded=(${graphX}, ${graphY})`);
+                    equationDisplay.innerText = `วาดอยู่ที่ (${graphX}, ${graphY}), ${getQuadrantAndTrig(graphX, graphY)}`;
+                } else if (toolSelect.value === "curve" && clickCount >= 1) {
+                    drawAll();
+                    if (clickCount === 1) {
+                        drawShapePreview(startX, startY, x, y);
+                    } else if (clickCount === 2) {
+                        drawShapePreview(startX, startY, x, y, controlX, controlY);
+                    }
+                } else if (isFirstClick && ["line", "rect", "circle"].includes(toolSelect.value)) {
+                    drawAll();
+                    drawShapePreview(startX, startY, x, y);
+                }
+            } catch (e) {
+                console.error("Error in handleMove:", e.message);
+            }
+        }
+
+        function handleEnd(e) {
+            try {
+                e.preventDefault();
+                console.log(`handleEnd: type=${e.type}, tool=${toolSelect.value}, drawing=${isDrawing}, rawPoints=`, rawPoints);
+                if (toolSelect.value === "freehand" && isDrawing) {
+                    isDrawing = false;
+                    if (rawPoints.length < 3) {
+                        equationDisplay.innerText = "❌ ต้องการจุดมากกว่า 2 จุด";
+                        drawAll();
+                        return;
+                    }
+                    drawnObjects.push({ type: "freehand", points: [...pixelPoints], color: colorPicker.value });
+                    const isXDependent = orderSelect.value !== "parabolaX";
+                    if (isFunction(rawPoints, isXDependent)) {
+                        let validPoints = rawPoints.filter(([x, y]) => Math.abs(x) <= 5 && Math.abs(y) <= 5);
+                        let type = orderSelect.value;
+                        console.log(`Calculating ${type} with points:`, validPoints);
+                        if (validPoints.length < 3) throw new Error("ต้องการจุดอย่างน้อย 3 จุด");
+                        let result, coeffs;
+                        if (type === "linear" && isVerticalLine(validPoints)) {
+                            type = "vertical";
+                            const positivePoints = validPoints.filter(([x]) => x > 0);
+                            if (positivePoints.length < validPoints.length / 2) throw new Error("จุดส่วนใหญ่ไม่อยู่ใน Q4/Q1");
+                            const xAvg = positivePoints.reduce((sum, [x]) => sum + x, 0) / positivePoints.length;
+                            if (Math.abs(xAvg) > 5 || xAvg <= 0) throw new Error("เส้นตั้งไม่อยู่ใน Q4/Q1");
+                            coeffs = [xAvg];
+                            console.log(`Vertical line: x=${xAvg.toFixed(3)}`);
+                        } else if (type === "linear") {
+                            result = regression.linear(validPoints);
+                            coeffs = result.equation;
+                            const [b, m] = coeffs;
+                            const yAtX2 = m * 2 + b;
+                            if (Math.abs(yAtX2) > 5) throw new Error("สมการไม่อยู่ในกริด");
+                        } else if (type === "polynomial2") {
+                            result = regression.polynomial(validPoints, { order: 2 });
+                            coeffs = result.equation;
+                            console.log(`Raw coeffs from polynomial:`, coeffs);
+                        } else if (type === "parabolaX") {
+                            const swappedPoints = validPoints.map(([x, y]) => [y, x]);
+                            result = regression.polynomial(swappedPoints, { order: 2 });
+                            coeffs = result.equation;
+                        } else if (type === "exponential") {
+                            validPoints = validPoints.filter(([x]) => x > 0);
+                            if (validPoints.length < 3) throw new Error("Exponential ต้องการ x > 0 และ 3 จุด");
+                            result = regression.exponential(validPoints);
+                            coeffs = result.equation;
+                        } else if (type === "logarithmic") {
+                            validPoints = validPoints.filter(([x]) => x > 0);
+                            if (validPoints.length < 3) throw new Error("Logarithmic ต้องการ x > 0 และ 3 จุด");
+                            result = regression.logarithmic(validPoints);
+                            coeffs = result.equation;
+                        } else if (type === "power") {
+                            validPoints = validPoints.filter(([x]) => x > 0);
+                            if (validPoints.length < 3) throw new Error("Power ต้องการ x > 0 และ 3 จุด");
+                            result = regression.power(validPoints);
+                            coeffs = result.equation;
+                        } else if (type === "polynomial3") {
+                            result = regression.polynomial(validPoints, { order: 3 });
+                            coeffs = result.equation;
+                        } else if (type === "sinusoidal") {
+                            result = regression.polynomial(validPoints, { order: 4 });
+                            coeffs = result.equation;
+                        }
+                        console.log(`Equation ${type}, coeffs:`, coeffs);
+                        const lastPoint = validPoints[validPoints.length - 1];
+                        const equationText = formatEquation(type, coeffs);
+                        equationDisplay.innerText = `✅ สมการ: ${equationText} (${getQuadrantAndTrig(customRound(lastPoint[0]), customRound(lastPoint[1]))}`;
+                    } else {
+                        console.log("Not a function, rawPoints:", rawPoints);
+                        equationDisplay.innerText = `❌ ไม่เป็นฟังก์ชัน: ${isXDependent ? 'x' : 'y'} ซ้ำมีหลายค่า`;
+                    }
+                    drawAll();
+                }
+            } catch (e) {
+                console.error(`Error in handleEnd: ${e.message}`);
+                equationDisplay.innerText = `❌ ข้อผิดพลาด: ${e.message || "การคำนวณล้มเหลว"}`;
+            }
+        }
+
+        function handleMouseOut() {
+            try {
+                if (isDrawing) {
+                    isDrawing = false;
+                    console.log("Mouse out, stopped drawing");
+                    drawAll();
+                }
+            } catch (e) {
+                console.error("Error in handleMouseOut:", e.message);
+            }
+        }
+
+        toolSelect.onchange = function() {
+            try {
+                console.log(`Tool changed to: ${toolSelect.value}`);
+                isDrawing = false;
+                isFirstClick = false;
+                clickCount = 0;
+                canvas.style.cursor = isErasing ? "pointer" : "crosshair";
+            } catch (e) {
+                console.error("Error in toolSelect.onchange:", e.message);
+            }
+        };
+
+        colorPicker.onchange = function() {
+            console.log(`Color changed to: ${colorPicker.value}`);
+        };
+
+        orderSelect.onchange = function() {
+            console.log(`Order changed to: ${orderSelect.value}`);
+        };
+
+        window.addEventListener('load', () => {
+            try {
+                console.log("Window loaded, initializing...");
+                if (!canvas || !ctx) {
+                    console.error("Canvas or context not found");
+                    equationDisplay.innerText = "❌ ไม่สามารถโหลด canvas ได้";
+                    return;
+                }
+                resizeCanvas();
+                drawAll();
+                canvas.addEventListener("mousedown", handleStart, { passive: false });
+                canvas.addEventListener("mousemove", handleMove, { passive: true });
+                canvas.addEventListener("mouseup", handleEnd, { passive: true });
+                canvas.addEventListener("mouseout", handleMouseOut, { passive: true });
+                canvas.addEventListener("touchstart", handleStart, { passive: false });
+                canvas.addEventListener("touchmove", handleMove, { passive: false });
+                canvas.addEventListener("touchend", handleEnd, { passive: true });
+                window.addEventListener("resize", resizeCanvas, { passive: true });
+            } catch (e) {
+                console.error("Error in window.onload:", e);
+            }
+        });
+    </script>
+</body>
+</html>
